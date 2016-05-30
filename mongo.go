@@ -10,7 +10,7 @@ import (
     "log"
     "gopkg.in/mgo.v2"
     "gopkg.in/mgo.v2/bson"
-    "reflect"
+   "reflect"
 )
 
 type Person struct {
@@ -47,20 +47,36 @@ func main(){
     //         log.Fatal(err)
     // }
 
-    var result map[string]interface{}
+    var result bson.M
     err = c.Find(bson.M{}).One(&result)
     if err != nil {
             log.Fatal(err)
     }
 
     fmt.Println(result)
-
-    for _, m := range result {
-        fmt.Println(reflect.TypeOf(m))
+		fmt.Println(reflect.TypeOf(result["re"]))
+		raw, err := MarshalRaw(result["re"])
+    if err != nil {
+        panic(err)
     }
 
-    n2, f := kani.Fy(result)
-    fmt.Println(f)
-    fmt.Println(n2.Defy())
+    fmt.Printf("%+v\n", raw)
+		fmt.Println(reflect.TypeOf(*raw))
 
+
+}
+
+func MarshalRaw(v interface{}) (*bson.Raw, error) {
+    bin, err := bson.Marshal(struct{ Raw interface{} }{v})
+    if err != nil {
+        return nil, err
+    }
+
+    var raw struct{ Raw bson.Raw }
+    err = bson.Unmarshal(bin, &raw)
+    if err != nil {
+        return nil, err
+    }
+
+    return &raw.Raw, nil
 }
